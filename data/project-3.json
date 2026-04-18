@@ -1,0 +1,8 @@
+{
+  "id": 3,
+  "title": "SaaS 教务平台",
+  "blocks": [
+    { "id": "b1", "type": "heading", "level": 1, "content": "项目背景" },
+    { "id": "b2", "type": "body", "content": "这里填写项目背景介绍。" }
+  ]
+}

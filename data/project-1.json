@@ -1,0 +1,88 @@
+{
+  "id": 1,
+  "title": "AI 课堂 · 奇思妙问",
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "heading",
+      "level": 1,
+      "content": "项目背景"
+    },
+    {
+      "id": "b2",
+      "type": "body",
+      "content": "这里填写项目背景介绍。可以换行。\n第二行内容。"
+    },
+    {
+      "id": "b3",
+      "type": "quote",
+      "content": "这里放关键数据或用户洞察，比如：国内首家推出数字人课堂，2024 年被总理表扬并登上新闻联播。"
+    },
+    {
+      "id": "b4",
+      "type": "heading",
+      "level": 2,
+      "content": "设计目标"
+    },
+    {
+      "id": "b5",
+      "type": "body",
+      "content": "这里填写设计目标说明。"
+    },
+    {
+      "id": "b6",
+      "type": "image-single",
+      "src": "assets/images/projects/placeholder.svg",
+      "caption": "图片说明文字"
+    },
+    {
+      "id": "b7",
+      "type": "heading",
+      "level": 2,
+      "content": "设计过程"
+    },
+    {
+      "id": "b8",
+      "type": "image-carousel",
+      "images": [
+        "assets/images/projects/placeholder.svg",
+        "assets/images/projects/placeholder.svg"
+      ],
+      "captions": ["界面截图 1", "界面截图 2"]
+    },
+    {
+      "id": "b9",
+      "type": "image-text",
+      "layout": "left",
+      "image": "assets/images/projects/placeholder.svg",
+      "caption": "",
+      "text": "这里填写配图说明文字。可以多行。\n适合用来解释某张截图的设计思路。"
+    },
+    {
+      "id": "b10",
+      "type": "heading",
+      "level": 2,
+      "content": "最终方案"
+    },
+    {
+      "id": "b11",
+      "type": "image-stack",
+      "images": [
+        "assets/images/projects/placeholder.svg",
+        "assets/images/projects/placeholder.svg"
+      ]
+    },
+    {
+      "id": "b12",
+      "type": "heading",
+      "level": 2,
+      "content": "项目演示"
+    },
+    {
+      "id": "b13",
+      "type": "video",
+      "videoType": "embed",
+      "url": "https://www.bilibili.com/video/BV1xx411c7mD"
+    }
+  ]
+}
