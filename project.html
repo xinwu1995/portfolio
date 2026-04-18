@@ -542,29 +542,33 @@
     // ── 加载项目 ──
     const params = new URLSearchParams(location.search);
     const id = parseInt(params.get('id')) || 1;
+    const isPreview = params.get('preview') === '1';
 
-    Promise.all([
-      fetch('data/project-' + id + '.json').then(r => {
-        if (!r.ok) throw new Error('项目不存在');
-        return r.json();
-      }),
-      fetch('data/projects.json').then(r => r.json())
-    ]).then(([project, projects]) => {
+    // 预览模式 badge
+    if (isPreview) {
+      const badge = document.createElement('div');
+      badge.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#10b981;color:#fff;font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;z-index:999;box-shadow:0 4px 12px rgba(16,185,129,.4);';
+      badge.textContent = '预览模式 · 实时同步';
+      document.body.appendChild(badge);
+    }
+
+    function renderProject(project, projects) {
       document.title = project.title + ' · 吴欣';
       document.getElementById('nav-title').textContent = project.title;
 
       const content = document.getElementById('content');
+      content.innerHTML = '';
       project.blocks.forEach(block => {
         content.appendChild(renderBlock(block));
       });
 
-      // 前后翻页
       const idx = projects.findIndex(p => p.id === id);
       const prev = projects[idx - 1];
       const next = projects[idx + 1];
-
       const prevLink = document.getElementById('prev-link');
       const nextLink = document.getElementById('next-link');
+      prevLink.className = 'nav-prev hidden';
+      nextLink.className = 'nav-next hidden';
 
       if (prev) {
         prevLink.href = 'project.html?id=' + prev.id;
@@ -576,14 +580,56 @@
         nextLink.href = 'project.html?id=' + next.id;
         nextLink.textContent = '';
         nextLink.appendChild(document.createTextNode(next.title));
-        const svgStr = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-        nextLink.insertAdjacentHTML('beforeend', svgStr);
+        nextLink.insertAdjacentHTML('beforeend', '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>');
         nextLink.classList.remove('hidden');
+      }
+    }
+
+    function getProjectData() {
+      if (isPreview) {
+        const raw = localStorage.getItem('portfolio_preview_' + id);
+        if (raw) return JSON.parse(raw);
+      }
+      return null;
+    }
+
+    // 加载 projects.json（只需一次）
+    fetch('data/projects.json').then(r => r.json()).then(projects => {
+      function load() {
+        if (isPreview) {
+          const data = getProjectData();
+          if (data) { renderProject(data, projects); return Promise.resolve(); }
+        }
+        return fetch('data/project-' + id + '.json').then(r => {
+          if (!r.ok) throw new Error('项目不存在');
+          return r.json();
+        }).then(project => renderProject(project, projects));
+      }
+
+      load().catch(err => {
+        const errP = document.createElement('p');
+        errP.style.cssText = 'color:var(--text-muted);padding:40px 0';
+        errP.textContent = '项目内容加载失败：' + err.message;
+        document.getElementById('content').appendChild(errP);
+      });
+
+      // 预览模式：每 1.5 秒检查 localStorage 是否有更新
+      if (isPreview) {
+        let lastSnapshot = localStorage.getItem('portfolio_preview_' + id);
+        setInterval(() => {
+          const current = localStorage.getItem('portfolio_preview_' + id);
+          if (current && current !== lastSnapshot) {
+            lastSnapshot = current;
+            try {
+              renderProject(JSON.parse(current), projects);
+            } catch(e) {}
+          }
+        }, 1500);
       }
     }).catch(err => {
       const errP = document.createElement('p');
       errP.style.cssText = 'color:var(--text-muted);padding:40px 0';
-      errP.textContent = '项目内容加载失败：' + err.message;
+      errP.textContent = '加载失败：' + err.message;
       document.getElementById('content').appendChild(errP);
     });
   </script>
