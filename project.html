@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目详情 · 吴欣</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --border: #e4e4e7;
+      --text-primary: #09090b;
+      --text-secondary: #52525b;
+      --text-muted: #a1a1aa;
+      --accent: #10b981;
+      --accent-light: #d1fae5;
+      --accent-text: #065f46;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* ── 导航 ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(250,250,250,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 100;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+    nav.scrolled { border-bottom-color: var(--border); }
+    .nav-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--text-primary); }
+    .nav-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* ── 内容区 ── */
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 96px 40px 80px;
+    }
+
+    /* ── 通用块间距 ── */
+    .block { margin-bottom: 48px; }
+    .block:last-child { margin-bottom: 0; }
+
+    /* ── 标题块 ── */
+    .block-h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.15;
+      color: var(--text-primary);
+    }
+    .block-h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+      color: var(--text-primary);
+    }
+    .block-h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.35;
+      color: var(--text-primary);
+    }
+
+    /* ── 正文块 ── */
+    .block-body {
+      font-size: 15px;
+      line-height: 1.85;
+      color: var(--text-secondary);
+    }
+
+    /* ── 引用块 ── */
+    .block-quote {
+      border-left: 4px solid var(--accent);
+      padding: 16px 20px;
+      background: #f0fdf4;
+      border-radius: 0 8px 8px 0;
+      font-size: 16px;
+      font-style: italic;
+      color: var(--accent-text);
+      line-height: 1.7;
+    }
+
+    /* ── 单张图片 ── */
+    .block-image-single img {
+      width: 100%;
+      border-radius: 12px;
+      display: block;
+    }
+    .img-caption {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* ── 图片轮播 ── */
+    .carousel {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      background: var(--border);
+    }
+    .carousel-track {
+      display: flex;
+      transition: transform 0.3s ease;
+    }
+    .carousel-track img {
+      width: 100%;
+      flex-shrink: 0;
+      display: block;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+    }
+    .carousel-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      transition: background 0.2s;
+      z-index: 2;
+    }
+    .carousel-btn:hover { background: white; }
+    .carousel-btn-prev { left: 12px; }
+    .carousel-btn-next { right: 12px; }
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 12px;
+    }
+    .carousel-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .carousel-dot.active { background: var(--accent); }
+
+    /* ── 图片拼接 ── */
+    .block-image-stack img {
+      width: 100%;
+      display: block;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .block-image-stack img:last-child { margin-bottom: 0; }
+
+    /* ── 图文混排 ── */
+    .block-image-text {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: center;
+    }
+    .block-image-text.layout-right .it-img { order: 2; }
+    .block-image-text.layout-right .it-text { order: 1; }
+    .block-image-text img {
+      width: 100%;
+      border-radius: 12px;
+      display: block;
+    }
+    .it-text {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+    }
+
+    /* ── 视频块 ── */
+    .block-video video {
+      width: 100%;
+      border-radius: 12px;
+      display: block;
+    }
+    .video-embed {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+    .video-embed iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: none;
+    }
+
+    /* ── 底部翻页 ── */
+    .project-nav {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 40px 64px;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+    }
+    .project-nav a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .project-nav a:hover { color: var(--text-primary); }
+    .project-nav a.hidden { visibility: hidden; }
+
+    /* ── Lightbox ── */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      cursor: zoom-out;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .lightbox.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 8px;
+      cursor: default;
+    }
+    .zoomable { cursor: zoom-in; }
+
+    /* ── 响应式 ── */
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-title { display: none; }
+      main { padding: 80px 20px 60px; }
+      .block-image-text {
+        grid-template-columns: 1fr;
+      }
+      .block-image-text.layout-right .it-img { order: 0; }
+      .block-image-text.layout-right .it-text { order: 0; }
+      .project-nav { padding: 32px 20px 48px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="navbar">
+    <a href="index.html" class="nav-back">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      返回首页
+    </a>
+    <span class="nav-title" id="nav-title"></span>
+    <div style="width: 80px"></div>
+  </nav>
+
+  <main id="content"></main>
+
+  <div class="project-nav" id="project-nav">
+    <a id="prev-link" href="#" class="hidden">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M9 11L5 7l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      上一个项目
+    </a>
+    <a id="next-link" href="#" class="hidden">
+      下一个项目
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <img id="lightbox-img" src="" alt="">
+  </div>
+
+  <script>
+    // ── 导航滚动边框 ──
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 10);
+    });
+
+    // ── Lightbox ──
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+
+    function openLightbox(src) {
+      lightboxImg.src = src;
+      lightbox.classList.add('active');
+    }
+
+    lightbox.addEventListener('click', () => lightbox.classList.remove('active'));
+    lightboxImg.addEventListener('click', e => e.stopPropagation());
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') lightbox.classList.remove('active');
+    });
+
+    // ── Block 渲染器 ──
+    function renderBlock(block) {
+      switch (block.type) {
+        case 'heading':        return renderHeading(block);
+        case 'body':           return renderBody(block);
+        case 'quote':          return renderQuote(block);
+        case 'image-single':   return renderImageSingle(block);
+        case 'image-carousel': return renderImageCarousel(block);
+        case 'image-stack':    return renderImageStack(block);
+        case 'image-text':     return renderImageText(block);
+        case 'video':          return renderVideo(block);
+        default:
+          return document.createElement('div');
+      }
+    }
+
+    function renderHeading(block) {
+      const el = document.createElement('h' + block.level);
+      el.className = 'block block-h' + block.level;
+      el.textContent = block.content;
+      return el;
+    }
+
+    function renderBody(block) {
+      const p = document.createElement('p');
+      p.className = 'block block-body';
+      p.innerHTML = block.content.replace(/\n/g, '<br>');
+      return p;
+    }
+
+    function renderQuote(block) {
+      const div = document.createElement('div');
+      div.className = 'block block-quote';
+      div.textContent = block.content;
+      return div;
+    }
+
+    function renderImageSingle(block) {
+      const wrap = document.createElement('div');
+      wrap.className = 'block block-image-single';
+      const img = document.createElement('img');
+      img.src = block.src;
+      img.alt = block.caption || '';
+      img.className = 'zoomable';
+      img.addEventListener('click', () => openLightbox(block.src));
+      wrap.appendChild(img);
+      if (block.caption) {
+        const cap = document.createElement('p');
+        cap.className = 'img-caption';
+        cap.textContent = block.caption;
+        wrap.appendChild(cap);
+      }
+      return wrap;
+    }
+
+    function renderImageCarousel(block) {
+      const wrap = document.createElement('div');
+      wrap.className = 'block';
+
+      const carousel = document.createElement('div');
+      carousel.className = 'carousel';
+
+      const track = document.createElement('div');
+      track.className = 'carousel-track';
+      block.images.forEach((src, i) => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = (block.captions && block.captions[i]) || '';
+        img.className = 'zoomable';
+        img.addEventListener('click', () => openLightbox(src));
+        track.appendChild(img);
+      });
+      carousel.appendChild(track);
+
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'carousel-btn carousel-btn-prev';
+      prevBtn.innerHTML = '&#8249;';
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'carousel-btn carousel-btn-next';
+      nextBtn.innerHTML = '&#8250;';
+      carousel.appendChild(prevBtn);
+      carousel.appendChild(nextBtn);
+      wrap.appendChild(carousel);
+
+      const dotsWrap = document.createElement('div');
+      dotsWrap.className = 'carousel-dots';
+      const dotEls = block.images.map((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+        dot.addEventListener('click', () => goTo(i));
+        dotsWrap.appendChild(dot);
+        return dot;
+      });
+      wrap.appendChild(dotsWrap);
+
+      let current = 0;
+      function goTo(idx) {
+        current = Math.max(0, Math.min(idx, block.images.length - 1));
+        track.style.transform = 'translateX(-' + (current * 100) + '%)';
+        dotEls.forEach((d, i) => d.classList.toggle('active', i === current));
+      }
+      prevBtn.addEventListener('click', () => goTo(current - 1));
+      nextBtn.addEventListener('click', () => goTo(current + 1));
+
+      return wrap;
+    }
+
+    function renderImageStack(block) {
+      const wrap = document.createElement('div');
+      wrap.className = 'block block-image-stack';
+      block.images.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.className = 'zoomable';
+        img.addEventListener('click', () => openLightbox(src));
+        wrap.appendChild(img);
+      });
+      return wrap;
+    }
+
+    function renderImageText(block) {
+      const wrap = document.createElement('div');
+      wrap.className = 'block block-image-text' + (block.layout === 'right' ? ' layout-right' : '');
+
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'it-img';
+      const img = document.createElement('img');
+      img.src = block.image;
+      img.alt = block.caption || '';
+      img.className = 'zoomable';
+      img.addEventListener('click', () => openLightbox(block.image));
+      imgWrap.appendChild(img);
+      if (block.caption) {
+        const cap = document.createElement('p');
+        cap.className = 'img-caption';
+        cap.textContent = block.caption;
+        imgWrap.appendChild(cap);
+      }
+
+      const text = document.createElement('div');
+      text.className = 'it-text';
+      text.innerHTML = (block.text || '').replace(/\n/g, '<br>');
+
+      wrap.appendChild(imgWrap);
+      wrap.appendChild(text);
+      return wrap;
+    }
+
+    function renderVideo(block) {
+      const wrap = document.createElement('div');
+      wrap.className = 'block block-video';
+      if (block.videoType === 'upload') {
+        const video = document.createElement('video');
+        video.src = block.src;
+        video.controls = true;
+        video.playsInline = true;
+        wrap.appendChild(video);
+      } else {
+        const embedDiv = document.createElement('div');
+        embedDiv.className = 'video-embed';
+        const iframe = document.createElement('iframe');
+        iframe.allowFullscreen = true;
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        if (block.url.includes('bilibili.com') || block.url.includes('b23.tv')) {
+          const bvMatch = block.url.match(/BV[\w]+/);
+          iframe.src = bvMatch
+            ? 'https://player.bilibili.com/player.html?bvid=' + bvMatch[0] + '&page=1&high_quality=1'
+            : block.url;
+        } else if (block.url.includes('youtube.com') || block.url.includes('youtu.be')) {
+          const ytMatch = block.url.match(/(?:v=|youtu\.be\/)([^&?/]+)/);
+          iframe.src = ytMatch
+            ? 'https://www.youtube.com/embed/' + ytMatch[1]
+            : block.url;
+        } else {
+          iframe.src = block.url;
+        }
+        embedDiv.appendChild(iframe);
+        wrap.appendChild(embedDiv);
+      }
+      return wrap;
+    }
+
+    // ── 加载项目 ──
+    const params = new URLSearchParams(location.search);
+    const id = parseInt(params.get('id')) || 1;
+
+    Promise.all([
+      fetch('data/project-' + id + '.json').then(r => {
+        if (!r.ok) throw new Error('项目不存在');
+        return r.json();
+      }),
+      fetch('data/projects.json').then(r => r.json())
+    ]).then(([project, projects]) => {
+      document.title = project.title + ' · 吴欣';
+      document.getElementById('nav-title').textContent = project.title;
+
+      const content = document.getElementById('content');
+      project.blocks.forEach(block => {
+        content.appendChild(renderBlock(block));
+      });
+
+      // 前后翻页
+      const idx = projects.findIndex(p => p.id === id);
+      const prev = projects[idx - 1];
+      const next = projects[idx + 1];
+
+      const prevLink = document.getElementById('prev-link');
+      const nextLink = document.getElementById('next-link');
+
+      if (prev) {
+        prevLink.href = 'project.html?id=' + prev.id;
+        prevLink.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 11L5 7l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' + prev.title;
+        prevLink.classList.remove('hidden');
+      }
+      if (next) {
+        nextLink.href = 'project.html?id=' + next.id;
+        nextLink.innerHTML = next.title + '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        nextLink.classList.remove('hidden');
+      }
+    }).catch(err => {
+      document.getElementById('content').innerHTML =
+        '<p style="color:var(--text-muted);padding:40px 0;">项目内容加载失败：' + err.message + '</p>';
+    });
+  </script>
+</body>
+</html>
