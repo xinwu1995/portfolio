@@ -1,17 +1,17 @@
 {
   "id": 1,
-  "title": "AI 课堂 · 奇思妙问",
+  "title": "奇思妙问 · 国内首家探索式对话助手",
   "blocks": [
     {
       "id": "b1",
       "type": "heading",
       "level": 1,
-      "content": "项目背景"
+      "content": "产品背景与定位"
     },
     {
       "id": "b2",
       "type": "body",
-      "content": "这里填写项目背景介绍。可以换行。\n第二行内容。"
+      "content": "1、项目背景：在23年3月通用大模型爆发的初期，公司发展战略要求是打造教育垂直大模型及应用。"
     },
     {
       "id": "b3",
@@ -48,7 +48,10 @@
         "assets/images/projects/placeholder.svg",
         "assets/images/projects/placeholder.svg"
       ],
-      "captions": ["界面截图 1", "界面截图 2"]
+      "captions": [
+        "界面截图 1",
+        "界面截图 2"
+      ]
     },
     {
       "id": "b9",
