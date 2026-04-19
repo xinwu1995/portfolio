@@ -733,11 +733,8 @@ async function selectProject(id) {
   renderSidebar();
   setStatus('加载中…', '');
 
-  // 优先从 localStorage 读（刷新后恢复未发布的编辑内容）
-  const cached = localStorage.getItem('portfolio_preview_' + id);
-  if (cached) {
-    try { currentData = JSON.parse(cached); } catch(e) { currentData = null; }
-  }
+  // 优先从 IndexedDB 恢复（含图片缓存，刷新不丢失）
+  currentData = await idbLoad(id);
   if (!currentData) {
     try {
       const res = await fetch(`data/project-${id}.json?_=` + Date.now());
@@ -764,14 +761,46 @@ const TYPE_LABELS = {
 };
 
 // ─────────────────────────────────────────
-// Auto-save + BroadcastChannel 实时预览
+// IndexedDB — 缓存含图片的完整数据
 // ─────────────────────────────────────────
-let previewChannel = null;  // 当前项目的 BroadcastChannel
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('portfolio_admin', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('projects');
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = reject;
+  });
+}
+async function idbSave(id, data) {
+  try {
+    const db = await openDB();
+    await new Promise((res, rej) => {
+      const tx = db.transaction('projects', 'readwrite');
+      tx.objectStore('projects').put(JSON.parse(JSON.stringify(data)), 'project_' + id);
+      tx.oncomplete = res; tx.onerror = rej;
+    });
+  } catch(e) {}
+}
+async function idbLoad(id) {
+  try {
+    const db = await openDB();
+    return await new Promise((res, rej) => {
+      const tx = db.transaction('projects', 'readonly');
+      const req = tx.objectStore('projects').get('project_' + id);
+      req.onsuccess = e => res(e.target.result || null);
+      req.onerror = rej;
+    });
+  } catch(e) { return null; }
+}
+
+// ─────────────────────────────────────────
+// BroadcastChannel 实时预览
+// ─────────────────────────────────────────
+let previewChannel = null;
 
 function getPreviewChannel(id) {
   if (previewChannel) previewChannel.close();
   previewChannel = new BroadcastChannel('portfolio_preview_' + id);
-  // 预览页打开时会发 request，admin 立刻回送当前数据
   previewChannel.addEventListener('message', e => {
     if (e.data && e.data.type === 'request') broadcastPreview();
   });
@@ -783,18 +812,15 @@ function broadcastPreview() {
   previewChannel.postMessage({ type: 'data', data: currentData });
 }
 
+// ─────────────────────────────────────────
+// Auto-save（广播 + IndexedDB）
+// ─────────────────────────────────────────
 let autosaveTimer = null;
 function autosave() {
   if (!currentId || !currentData) return;
-  // 立刻广播给预览页（含图片 data URL）
-  broadcastPreview();
-  // 延迟存 localStorage（仅文字，图片大时会静默失败）
+  broadcastPreview();  // 立刻广播（含图片 data URL）
   clearTimeout(autosaveTimer);
-  autosaveTimer = setTimeout(() => {
-    try {
-      localStorage.setItem('portfolio_preview_' + currentId, JSON.stringify(currentData));
-    } catch(e) { /* storage full, ok */ }
-  }, 500);
+  autosaveTimer = setTimeout(() => idbSave(currentId, currentData), 500);
 }
 
 function renderBlockList() {
@@ -1054,6 +1080,7 @@ function buildImageCarouselFields(block, idx) {
           block.images[imgIdx] = e.target.result;
           block.captions[imgIdx] = block.captions[imgIdx] || '';
           render();
+          autosave();
         };
         reader.readAsDataURL(file);
       });
@@ -1128,6 +1155,7 @@ function buildImageStackFields(block, idx) {
           pendingUploads[`block_${idx}_stack_${imgIdx}`] = { base64: b64, filename: fname, targetPath: `assets/images/projects/${fname}` };
           block.images[imgIdx] = e.target.result;
           render();
+          autosave();
         };
         reader.readAsDataURL(file);
       });
@@ -1256,6 +1284,7 @@ function buildVideoTypeFields(block, idx) {
         block.src = `assets/videos/${fname}`;
         delete block.url;
         text.innerHTML = `已选择：<span>${fname}</span>（点击重新选择）`;
+        autosave();
       };
       reader.readAsDataURL(file);
     });
@@ -1309,6 +1338,7 @@ function buildSingleImageUpload(block, blockIdx, field) {
       pendingUploads[`block_${blockIdx}_${field}`] = { base64: b64, filename: fname, targetPath };
       block[field] = e.target.result;
       updateUI();
+      autosave();
     };
     reader.readAsDataURL(file);
   });
