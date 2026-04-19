@@ -555,6 +555,7 @@ select { cursor: pointer; }
         <div id="add-block-menu">
           <button class="add-type-btn" data-type="text">文本</button>
           <button class="add-type-btn" data-type="image-single">单图</button>
+          <button class="add-type-btn" data-type="image-duo">左右图</button>
           <button class="add-type-btn" data-type="image-carousel">轮播图</button>
           <button class="add-type-btn" data-type="image-stack">堆叠图</button>
           <button class="add-type-btn" data-type="image-text">图文</button>
@@ -756,7 +757,7 @@ async function selectProject(id) {
 // ─────────────────────────────────────────
 const TYPE_LABELS = {
   heading:'标题', body:'正文', quote:'引言', text:'文本',
-  'image-single':'单图', 'image-carousel':'轮播图',
+  'image-single':'单图', 'image-duo':'左右图', 'image-carousel':'轮播图',
   'image-stack':'堆叠图', 'image-text':'图文', video:'视频'
 };
 
@@ -897,7 +898,7 @@ function buildBlockItem(block, idx) {
     const menu = document.createElement('div');
     menu.className = 'inline-add-menu';
     menu.style.cssText = 'position:absolute;top:32px;right:0;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;z-index:50;width:260px;box-shadow:0 8px 24px rgba(0,0,0,.1);';
-    ['text','image-single','image-carousel','image-stack','image-text','video'].forEach(type => {
+    ['text','image-single','image-duo','image-carousel','image-stack','image-text','video'].forEach(type => {
       const t = document.createElement('button');
       t.className = 'add-type-btn';
       t.style.cssText = 'font-size:11px;padding:7px 4px;';
@@ -951,6 +952,7 @@ function buildBlockFields(block, idx) {
     case 'body':
     case 'quote':          wrap.appendChild(buildTextFields(block)); break;
     case 'image-single':   wrap.appendChild(buildImageSingleFields(block, idx)); break;
+    case 'image-duo':      wrap.appendChild(buildImageDuoFields(block, idx)); break;
     case 'image-carousel': wrap.appendChild(buildImageCarouselFields(block, idx)); break;
     case 'image-stack':    wrap.appendChild(buildImageStackFields(block, idx)); break;
     case 'image-text':     wrap.appendChild(buildImageTextField(block, idx)); break;
@@ -1032,9 +1034,12 @@ function buildTextFields(block) {
   btnBold.title = '加粗 (Cmd+B)';
   btnBold.style.cssText = 'width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .12s;font-family:Inter,sans-serif;';
   btnBold.addEventListener('mousedown', e => {
-    e.preventDefault(); // 防止编辑区失焦
+    e.preventDefault();
+    editor.focus();     // 确保编辑区有焦点
     document.execCommand('bold');
-    editor.dispatchEvent(new Event('input'));
+    block.content = editor.innerHTML;
+    autosave();
+    updateToolbar();
   });
   // 选中时高亮按钮
   function updateToolbar() {
@@ -1071,6 +1076,41 @@ function buildImageSingleFields(block, idx) {
   frag.appendChild(fieldGroup('图片', buildSingleImageUpload(block, idx, 'src')));
   frag.appendChild(fieldGroup('图片说明（可选）', makeInput('图片说明文字', block.caption, v => { block.caption = v; })));
   return frag;
+}
+
+// image-duo（左右两图，各有说明）
+function buildImageDuoFields(block, idx) {
+  if (!block.images) block.images = ['', ''];
+  if (!block.captions) block.captions = ['', ''];
+
+  const wrap = document.createElement('div');
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px;';
+
+  [0, 1].forEach(i => {
+    const col = document.createElement('div');
+    col.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+
+    const lbl = document.createElement('label');
+    lbl.className = 'field-label';
+    lbl.textContent = i === 0 ? '左图' : '右图';
+    col.appendChild(lbl);
+
+    // 图片上传区（复用 buildSingleImageUpload，但需要操作 block.images[i]）
+    const proxyBlock = { get src() { return block.images[i]; }, set src(v) { block.images[i] = v; } };
+    const zone = buildSingleImageUpload(proxyBlock, idx, 'src');
+    // 上传后触发 autosave
+    const origFi = zone.querySelector('input[type=file]');
+    origFi.addEventListener('change', () => { setTimeout(autosave, 100); });
+    col.appendChild(zone);
+
+    const capInput = makeInput('图片说明（可选）', block.captions[i], v => { block.captions[i] = v; autosave(); });
+    col.appendChild(capInput);
+    grid.appendChild(col);
+  });
+
+  wrap.appendChild(grid);
+  return wrap;
 }
 
 // image-carousel
@@ -1396,6 +1436,7 @@ function newBlock(type) {
     case 'body':           return { id, type, content: '' };
     case 'quote':          return { id, type, content: '' };
     case 'image-single':   return { id, type, src: '', caption: '' };
+    case 'image-duo':      return { id, type, images: ['', ''], captions: ['', ''] };
     case 'image-carousel': return { id, type, images: [], captions: [] };
     case 'image-stack':    return { id, type, images: [] };
     case 'image-text':     return { id, type, layout: 'left', image: '', caption: '', text: '' };

@@ -132,6 +132,21 @@
       line-height: 1.5;
     }
 
+    /* ── 左右图 ── */
+    .block-image-duo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .image-duo-item img {
+      width: 100%;
+      border-radius: 12px;
+      display: block;
+    }
+    .image-duo-item .img-caption {
+      text-align: center;
+    }
+
     /* ── 图片轮播 ── */
     .carousel {
       position: relative;
@@ -357,6 +372,7 @@
         case 'body':           return renderBody(block);
         case 'quote':          return renderQuote(block);
         case 'image-single':   return renderImageSingle(block);
+        case 'image-duo':      return renderImageDuo(block);
         case 'image-carousel': return renderImageCarousel(block);
         case 'image-stack':    return renderImageStack(block);
         case 'image-text':     return renderImageText(block);
@@ -387,6 +403,32 @@
       div.className = 'block block-quote';
       div.innerHTML = block.content || '';
       return div;
+    }
+
+    function renderImageDuo(block) {
+      const wrap = document.createElement('div');
+      wrap.className = 'block block-image-duo';
+      (block.images || ['', '']).forEach((src, i) => {
+        const item = document.createElement('div');
+        item.className = 'image-duo-item';
+        if (src) {
+          const img = document.createElement('img');
+          img.src = src;
+          img.alt = (block.captions && block.captions[i]) || '';
+          img.className = 'zoomable';
+          img.addEventListener('click', () => openLightbox(src));
+          item.appendChild(img);
+        }
+        const cap = (block.captions && block.captions[i]) ? block.captions[i] : '';
+        if (cap) {
+          const p = document.createElement('p');
+          p.className = 'img-caption';
+          p.textContent = cap;
+          item.appendChild(p);
+        }
+        wrap.appendChild(item);
+      });
+      return wrap;
     }
 
     function renderImageSingle(block) {
