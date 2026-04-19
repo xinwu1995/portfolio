@@ -478,6 +478,35 @@ select { cursor: pointer; }
 .btn-primary:hover { background: #27272a; }
 .btn-primary:disabled { background: #a1a1aa; cursor: not-allowed; }
 
+/* ── 加粗浮动 Tip ── */
+#bold-tip {
+  position: fixed;
+  display: none;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 2000;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  font-family: 'Inter', sans-serif;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  user-select: none;
+}
+#bold-tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1a1a1a;
+}
+
 /* ── GitHub Config Modal ── */
 #modal-overlay {
   display: none;
@@ -516,6 +545,9 @@ select { cursor: pointer; }
 </style>
 </head>
 <body>
+
+<!-- 加粗浮动 Tip -->
+<div id="bold-tip"></div>
 
 <!-- Topbar -->
 <div id="topbar">
@@ -988,6 +1020,67 @@ function makeTextarea(placeholder, value, rows, onChange) {
   return el;
 }
 
+// ─────────────────────────────────────────
+// 全局加粗浮动 Tip
+// ─────────────────────────────────────────
+const boldTip = document.getElementById('bold-tip');
+let boldTipActiveEditor = null;
+let boldTipActiveBlock = null;
+let boldTipHideTimer = null;
+
+function showBoldTip(editor, block) {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.rangeCount) { hideBoldTip(); return; }
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) { hideBoldTip(); return; }
+
+  boldTipActiveEditor = editor;
+  boldTipActiveBlock = block;
+
+  const isBold = document.queryCommandState('bold');
+  boldTip.textContent = isBold ? '取消加粗' : '加粗';
+
+  const rect = range.getBoundingClientRect();
+  boldTip.style.left = (rect.left + rect.width / 2) + 'px';
+  // 显示在选区上方，空间不够时显示在下方
+  const tipH = 32;
+  const above = rect.top - tipH - 10;
+  if (above > 0) {
+    boldTip.style.top = above + 'px';
+    boldTip.style.removeProperty('bottom');
+    boldTip.style.setProperty('--arrow', 'bottom');
+  } else {
+    boldTip.style.top = (rect.bottom + 10) + 'px';
+  }
+  boldTip.style.display = 'block';
+}
+
+function hideBoldTip() {
+  boldTip.style.display = 'none';
+  boldTipActiveEditor = null;
+  boldTipActiveBlock = null;
+}
+
+boldTip.addEventListener('mousedown', e => {
+  e.preventDefault(); // 不丢失选区
+  if (!boldTipActiveEditor || !boldTipActiveBlock) return;
+  boldTipActiveEditor.focus();
+  document.execCommand('bold');
+  boldTipActiveBlock.content = boldTipActiveEditor.innerHTML;
+  autosave();
+  hideBoldTip();
+});
+
+// 点击页面其他地方收起 tip
+document.addEventListener('mousedown', e => {
+  if (e.target !== boldTip) {
+    // 延迟隐藏，让 tip 的 mousedown 先执行
+    boldTipHideTimer = setTimeout(hideBoldTip, 150);
+  } else {
+    clearTimeout(boldTipHideTimer);
+  }
+});
+
 // 统一文本块（heading / body / quote 共用）
 function buildTextFields(block) {
   const frag = document.createDocumentFragment();
@@ -1015,54 +1108,35 @@ function buildTextFields(block) {
   });
   frag.appendChild(fieldGroup('样式', sel));
 
-  // 富文本编辑区
+  // contenteditable 编辑区
   const editorWrap = document.createElement('div');
   editorWrap.className = 'field-group';
-
   const lbl = document.createElement('label');
   lbl.className = 'field-label';
   lbl.textContent = '内容';
   editorWrap.appendChild(lbl);
 
-  // 工具栏
-  const toolbar = document.createElement('div');
-  toolbar.style.cssText = 'display:flex;gap:4px;margin-bottom:4px;';
-
-  const btnBold = document.createElement('button');
-  btnBold.type = 'button';
-  btnBold.innerHTML = '<b>B</b>';
-  btnBold.title = '加粗 (Cmd+B)';
-  btnBold.style.cssText = 'width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .12s;font-family:Inter,sans-serif;';
-  btnBold.addEventListener('mousedown', e => {
-    e.preventDefault();
-    editor.focus();     // 确保编辑区有焦点
-    document.execCommand('bold');
-    block.content = editor.innerHTML;
-    autosave();
-    updateToolbar();
-  });
-  // 选中时高亮按钮
-  function updateToolbar() {
-    btnBold.style.background = document.queryCommandState('bold') ? 'var(--accent-light)' : 'var(--surface)';
-    btnBold.style.borderColor = document.queryCommandState('bold') ? 'var(--accent)' : 'var(--border)';
-  }
-
-  toolbar.appendChild(btnBold);
-  editorWrap.appendChild(toolbar);
-
-  // contenteditable 编辑区
   const editor = document.createElement('div');
   editor.contentEditable = 'true';
   editor.innerHTML = block.content || '';
-  editor.style.cssText = 'min-height:80px;border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-size:13px;font-family:Inter,sans-serif;color:var(--text);background:var(--bg);outline:none;line-height:1.7;transition:border-color .15s;white-space:pre-wrap;';
+  editor.style.cssText = 'min-height:80px;border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-size:13px;font-family:Inter,sans-serif;color:var(--text);background:var(--bg);outline:none;line-height:1.7;transition:border-color .15s;';
   editor.addEventListener('focus', () => { editor.style.borderColor = 'var(--accent)'; editor.style.background = '#fff'; });
   editor.addEventListener('blur',  () => { editor.style.borderColor = 'var(--border)'; editor.style.background = 'var(--bg)'; });
-  editor.addEventListener('keyup', updateToolbar);
-  editor.addEventListener('mouseup', updateToolbar);
   editor.addEventListener('input', () => { block.content = editor.innerHTML; autosave(); });
-  // Cmd+B / Ctrl+B
+  // 选中文字时显示浮动 tip
+  editor.addEventListener('mouseup', () => showBoldTip(editor, block));
+  editor.addEventListener('keyup', e => {
+    if (e.shiftKey) showBoldTip(editor, block);
+    else hideBoldTip();
+  });
+  // Cmd+B / Ctrl+B 快捷键
   editor.addEventListener('keydown', e => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'b') { e.preventDefault(); document.execCommand('bold'); editor.dispatchEvent(new Event('input')); }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+      e.preventDefault();
+      document.execCommand('bold');
+      block.content = editor.innerHTML;
+      autosave();
+    }
   });
 
   editorWrap.appendChild(editor);
