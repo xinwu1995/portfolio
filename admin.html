@@ -1494,10 +1494,15 @@ function buildVideoFields(block, idx) {
     btn.textContent = v === 'embed' ? '粘贴链接（B站/YouTube）' : '上传视频文件';
     btn.addEventListener('click', () => {
       block.videoType = v;
+      // 切换模式时清除该 block 的待上传视频记录，避免发布时仍尝试上传旧文件
+      const pendingKey = `block_${idx}_video`;
+      delete pendingUploads[pendingKey];
+      delete pendingVideoFiles[pendingKey];
       toggle.querySelectorAll('.video-type-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       fieldsWrap.innerHTML = '';
       fieldsWrap.appendChild(buildVideoTypeFields(block, idx));
+      autosave();
     });
     toggle.appendChild(btn);
   });
