@@ -684,25 +684,18 @@
       }
     }
 
-    // 加载 projects.json（只需一次）
-    fetch('data/projects.json').then(r => r.json()).then(projects => {
-      if (isPreview) {
-        // BroadcastChannel 接收 admin 实时推送（含图片 data URL，无大小限制）
-        const channel = new BroadcastChannel('portfolio_preview_' + id);
-        channel.addEventListener('message', e => {
-          if (e.data && e.data.type === 'data') {
-            try { renderProject(e.data.data, projects); } catch(ex) {}
-          }
-        });
-        // 向 admin 请求当前数据（admin 收到后立刻推送）
-        channel.postMessage({ type: 'request' });
-
-        // 同时尝试从 localStorage 读一次作为初始渲染（文字内容可用，图片可能无）
-        try {
-          const cached = localStorage.getItem('portfolio_preview_' + id);
-          if (cached) renderProject(JSON.parse(cached), projects);
-        } catch(e) {}
-      } else {
+    if (isPreview) {
+      // 预览模式：直接走 BroadcastChannel，不依赖 fetch
+      const channel = new BroadcastChannel('portfolio_preview_' + id);
+      channel.addEventListener('message', e => {
+        if (e.data && e.data.type === 'data') {
+          try { renderProject(e.data.data, []); } catch(ex) {}
+        }
+      });
+      channel.postMessage({ type: 'request' });
+    } else {
+      // 正常浏览模式（GitHub Pages）：fetch JSON
+      fetch('data/projects.json').then(r => r.json()).then(projects => {
         fetch('data/project-' + id + '.json').then(r => {
           if (!r.ok) throw new Error('项目不存在');
           return r.json();
@@ -713,13 +706,13 @@
             errP.textContent = '项目内容加载失败：' + err.message;
             document.getElementById('content').appendChild(errP);
           });
-      }
-    }).catch(err => {
-      const errP = document.createElement('p');
-      errP.style.cssText = 'color:var(--text-muted);padding:40px 0';
-      errP.textContent = '加载失败：' + err.message;
-      document.getElementById('content').appendChild(errP);
-    });
+      }).catch(err => {
+        const errP = document.createElement('p');
+        errP.style.cssText = 'color:var(--text-muted);padding:40px 0';
+        errP.textContent = '加载失败：' + err.message;
+        document.getElementById('content').appendChild(errP);
+      });
+    }
   </script>
 </body>
 </html>
