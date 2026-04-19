@@ -10,12 +10,13 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #fafafa;
+      --bg: #ffffff;
       --surface: #ffffff;
-      --border: #e4e4e7;
+      --border: #e5e7eb;
+      --border-subtle: #f3f4f6;
       --text-primary: #09090b;
-      --text-secondary: #52525b;
-      --text-muted: #a1a1aa;
+      --text-secondary: #374151;
+      --text-muted: #9ca3af;
       --accent: #10b981;
       --accent-light: #d1fae5;
       --accent-text: #065f46;
@@ -31,105 +32,161 @@
     nav {
       position: fixed;
       top: 0; left: 0; right: 0;
-      height: 64px;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 40px;
-      background: rgba(250,250,250,0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      padding: 0 48px;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       z-index: 100;
       border-bottom: 1px solid transparent;
       transition: border-color 0.2s;
     }
-    nav.scrolled { border-bottom-color: var(--border); }
+    nav.scrolled { border-bottom-color: var(--border-subtle); }
     .nav-back {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
-      color: var(--text-secondary);
+      color: var(--text-muted);
       text-decoration: none;
       transition: color 0.2s;
     }
     .nav-back:hover { color: var(--text-primary); }
     .nav-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text-primary);
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
+      max-width: 400px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* ── 内容区 ── */
     main {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 104px 40px 80px;
+      padding: 80px 48px 80px;
+      counter-reset: section;
     }
 
-    /* ── 通用块间距 ── */
-    .block { margin-bottom: 48px; }
+    /* ── 块间距系统 ── */
+    /* 默认：内容块之间 32px */
+    .block { margin-bottom: 32px; }
     .block:last-child { margin-bottom: 0; }
 
-    /* ── 标题块 ── */
+    /* 图片类块下方留更多空气 */
+    .block-image-single,
+    .block-image-duo,
+    .block-image-stack,
+    .block-image-text,
+    .block-video { margin-bottom: 48px; }
+
+    /* H2 上方是新章节入口，需要大间距 */
+    .block-h2 { margin-top: 72px; }
+    /* H2 紧接 H1 时间距收小 */
+    .block-h1 + .block-h2 { margin-top: 40px; }
+
+    /* H3 上方留呼吸空间 */
+    .block-h3 { margin-top: 40px; }
+    .block-h2 + .block-h3 { margin-top: 20px; }
+
+    /* 标题后第一个内容块，间距收紧 */
+    .block-h1 + .block,
+    .block-h2 + .block,
+    .block-h3 + .block { margin-top: -8px; }
+
+    /* ── H1：项目主标题 ── */
     .block-h1 {
-      font-size: 2rem;
+      font-size: 2.125rem;
       font-weight: 800;
       letter-spacing: -0.04em;
-      line-height: 1.15;
+      line-height: 1.1;
       color: var(--text-primary);
+      max-width: 720px;
+      margin-bottom: 20px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border-subtle);
     }
+
+    /* ── H2：章节标题（带自动序号） ── */
     .block-h2 {
-      font-size: 1.4rem;
+      font-size: 1.375rem;
       font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1.25;
+      letter-spacing: -0.025em;
+      line-height: 1.3;
       color: var(--text-primary);
+      max-width: 720px;
+      margin-bottom: 16px;
+      counter-increment: section;
     }
+    .block-h2::before {
+      content: "0" counter(section) " ·";
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    /* ── H3：小节标题 ── */
     .block-h3 {
-      font-size: 1.1rem;
+      font-size: 1.0625rem;
       font-weight: 600;
-      letter-spacing: -0.02em;
-      line-height: 1.35;
+      letter-spacing: -0.015em;
+      line-height: 1.4;
       color: var(--text-primary);
+      max-width: 720px;
+      margin-bottom: 12px;
     }
 
     /* ── 正文块 ── */
     .block-body {
       font-size: 15px;
-      line-height: 1.85;
+      line-height: 1.9;
       color: var(--text-secondary);
+      max-width: 680px;
     }
 
     /* ── 引用块 ── */
     .block-quote {
-      border-left: 4px solid var(--accent);
-      padding: 16px 20px;
+      border-left: 3px solid var(--accent);
+      padding: 14px 20px;
       background: #f0fdf4;
-      border-radius: 0 8px 8px 0;
-      font-size: 16px;
-      font-style: italic;
+      border-radius: 0 10px 10px 0;
+      font-size: 15px;
+      font-style: normal;
       color: var(--accent-text);
-      line-height: 1.7;
+      line-height: 1.8;
+      max-width: 680px;
+    }
+
+    /* ── 图片通用 caption ── */
+    .img-caption {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+      letter-spacing: 0.01em;
     }
 
     /* ── 单张图片 ── */
     .block-image-single img {
       width: 100%;
-      border-radius: 12px;
+      border-radius: 14px;
       display: block;
-    }
-    .img-caption {
-      margin-top: 10px;
-      font-size: 13px;
-      color: var(--text-muted);
-      text-align: center;
-      line-height: 1.5;
+      border: 1px solid var(--border-subtle);
     }
 
     /* ── 左右图 ── */
@@ -140,19 +197,19 @@
     }
     .image-duo-item img {
       width: 100%;
-      border-radius: 12px;
+      border-radius: 14px;
       display: block;
+      border: 1px solid var(--border-subtle);
     }
-    .image-duo-item .img-caption {
-      text-align: center;
-    }
+    .image-duo-item .img-caption { text-align: center; }
 
     /* ── 图片轮播 ── */
     .carousel {
       position: relative;
       overflow: hidden;
-      border-radius: 12px;
-      background: var(--border);
+      border-radius: 14px;
+      background: var(--border-subtle);
+      border: 1px solid var(--border-subtle);
     }
     .carousel-track {
       display: flex;
@@ -169,7 +226,7 @@
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.95);
       border: 1px solid var(--border);
       border-radius: 50%;
       width: 36px; height: 36px;
@@ -177,12 +234,13 @@
       cursor: pointer;
       font-size: 18px;
       line-height: 1;
-      transition: background 0.2s;
+      transition: background 0.15s;
       z-index: 2;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     .carousel-btn:hover { background: white; }
-    .carousel-btn-prev { left: 12px; }
-    .carousel-btn-next { right: 12px; }
+    .carousel-btn-prev { left: 14px; }
+    .carousel-btn-next { right: 14px; }
     .carousel-dots {
       display: flex;
       justify-content: center;
@@ -190,7 +248,7 @@
       margin-top: 12px;
     }
     .carousel-dot {
-      width: 6px; height: 6px;
+      width: 5px; height: 5px;
       border-radius: 50%;
       background: var(--border);
       cursor: pointer;
@@ -198,13 +256,18 @@
     }
     .carousel-dot.active { background: var(--accent); }
 
-    /* ── 图片拼接 ── */
-    .block-image-stack { display: flex; flex-direction: column; gap: 12px; }
+    /* ── 图片拼接（堆叠）── */
+    .block-image-stack { display: flex; flex-direction: column; gap: 16px; }
     .stack-item { display: flex; flex-direction: column; gap: 8px; }
-    .stack-item img { width: 100%; display: block; border-radius: 12px; }
+    .stack-item img {
+      width: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 1px solid var(--border-subtle);
+    }
     .stack-item .img-caption {
-      font-size: 13px;
-      color: #888;
+      font-size: 12px;
+      color: var(--text-muted);
       text-align: center;
       line-height: 1.5;
     }
@@ -213,26 +276,27 @@
     .block-image-text {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 32px;
+      gap: 40px;
       align-items: center;
     }
     .block-image-text.layout-right .it-img { order: 2; }
     .block-image-text.layout-right .it-text { order: 1; }
     .block-image-text img {
       width: 100%;
-      border-radius: 12px;
+      border-radius: 14px;
       display: block;
+      border: 1px solid var(--border-subtle);
     }
     .it-text {
       font-size: 15px;
-      line-height: 1.8;
+      line-height: 1.85;
       color: var(--text-secondary);
     }
 
     /* ── 视频块 ── */
     .block-video video {
       width: 100%;
-      border-radius: 12px;
+      border-radius: 14px;
       display: block;
       aspect-ratio: 16/9;
       background: #000;
@@ -242,7 +306,8 @@
       padding-bottom: 56.25%;
       height: 0;
       overflow: hidden;
-      border-radius: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border-subtle);
     }
     .video-embed iframe {
       position: absolute;
@@ -255,15 +320,15 @@
     .project-nav {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 40px 40px 64px;
+      padding: 40px 48px 64px;
       display: flex;
       justify-content: space-between;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--border-subtle);
     }
     .project-nav a {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
-      color: var(--text-secondary);
+      color: var(--text-muted);
       text-decoration: none;
       display: flex;
       align-items: center;
@@ -277,7 +342,7 @@
     .lightbox {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.88);
+      background: rgba(0,0,0,0.9);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -287,10 +352,7 @@
       pointer-events: none;
       transition: opacity 0.2s;
     }
-    .lightbox.active {
-      opacity: 1;
-      pointer-events: all;
-    }
+    .lightbox.active { opacity: 1; pointer-events: all; }
     .lightbox img {
       max-width: 90vw;
       max-height: 90vh;
@@ -302,14 +364,13 @@
 
     /* ── 响应式 ── */
     @media (max-width: 768px) {
-      nav { padding: 0 20px; }
+      nav { padding: 0 20px; height: 52px; }
       .nav-title { display: none; }
-      main { padding: 80px 20px 60px; }
-      .block-image-text {
-        grid-template-columns: 1fr;
-      }
-      .block-image-text.layout-right .it-img { order: 0; }
-      .block-image-text.layout-right .it-text { order: 0; }
+      main { padding: 68px 20px 60px; }
+      .block-h1, .block-h2, .block-h3, .block-body, .block-quote { max-width: 100%; }
+      .block-image-text { grid-template-columns: 1fr; gap: 20px; }
+      .block-image-text.layout-right .it-img,
+      .block-image-text.layout-right .it-text { order: unset; }
       .project-nav { padding: 32px 20px 48px; }
     }
   </style>
