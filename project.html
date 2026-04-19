@@ -234,6 +234,8 @@
       width: 100%;
       border-radius: 12px;
       display: block;
+      aspect-ratio: 16/9;
+      background: #000;
     }
     .video-embed {
       position: relative;
@@ -573,7 +575,8 @@
       wrap.className = 'block block-video';
       if (block.videoType === 'upload') {
         const video = document.createElement('video');
-        video.src = block.src;
+        // _localVideoSrc: 本地预览用的 data URL 或 blob URL（admin 实时预览时使用）
+        video.src = block._localVideoSrc || block.src;
         video.controls = true;
         video.playsInline = true;
         wrap.appendChild(video);

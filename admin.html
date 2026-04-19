@@ -644,6 +644,10 @@ let currentData = null;
 // value: { base64, filename, targetPath }
 let pendingUploads = {};
 
+// pendingVideoFiles: large video files (>20MB) stored as File objects, uploaded at publish time
+// value: { file, filename, targetPath }
+let pendingVideoFiles = {};
+
 // ─────────────────────────────────────────
 // Config
 // ─────────────────────────────────────────
@@ -762,6 +766,7 @@ function renderSidebar() {
 async function selectProject(id) {
   currentId = id;
   pendingUploads = {};
+  pendingVideoFiles = {};
   getPreviewChannel(id);  // 初始化/切换 BroadcastChannel
   renderSidebar();
   setStatus('加载中…', '');
@@ -1441,18 +1446,33 @@ function buildVideoTypeFields(block, idx) {
 
     fi.addEventListener('change', () => {
       const file = fi.files[0]; if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        const b64 = e.target.result.split(',')[1];
-        const ext = file.name.split('.').pop();
-        const fname = `p${currentId}-video-b${idx}-${Date.now()}.${ext}`;
-        pendingUploads[pendingKey] = { base64: b64, filename: fname, targetPath: `assets/videos/${fname}` };
-        block.src = `assets/videos/${fname}`;
-        delete block.url;
-        text.innerHTML = `已选择：<span>${fname}</span>（点击重新选择）`;
+      if (file.size > 100 * 1024 * 1024) {
+        alert('视频文件不能超过 100MB');
+        return;
+      }
+      const ext = file.name.split('.').pop();
+      const fname = `p${currentId}-video-b${idx}-${Date.now()}.${ext}`;
+      block.src = `assets/videos/${fname}`;
+      delete block.url;
+      text.innerHTML = `已选择：<span>${fname}</span>（点击重新选择）`;
+
+      const LARGE_THRESHOLD = 20 * 1024 * 1024; // 20MB
+      if (file.size <= LARGE_THRESHOLD) {
+        // 小文件：用 FileReader 转 base64，支持跨标签实时预览
+        const reader = new FileReader();
+        reader.onload = e => {
+          const b64 = e.target.result.split(',')[1];
+          pendingUploads[pendingKey] = { base64: b64, filename: fname, targetPath: `assets/videos/${fname}` };
+          block._localVideoSrc = e.target.result;
+          autosave();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // 大文件（20MB–100MB）：用 Object URL，避免内存爆炸
+        block._localVideoSrc = URL.createObjectURL(file);
+        pendingVideoFiles[pendingKey] = { file, filename: fname, targetPath: `assets/videos/${fname}` };
         autosave();
-      };
-      reader.readAsDataURL(file);
+      }
     });
 
     zone.appendChild(fi); zone.appendChild(text);
@@ -1592,7 +1612,7 @@ async function publishProject() {
   setStatus('准备发布…', '');
 
   try {
-    // 1. Upload pending files
+    // 1. Upload pending files (images & small videos)
     const uploadKeys = Object.keys(pendingUploads);
     for (let i = 0; i < uploadKeys.length; i++) {
       const key = uploadKeys[i];
@@ -1602,6 +1622,23 @@ async function publishProject() {
       updateBlockImagePath(key, up.targetPath);
     }
     pendingUploads = {};
+
+    // 1b. Upload large video files (read as base64 at publish time)
+    const videoKeys = Object.keys(pendingVideoFiles);
+    for (let i = 0; i < videoKeys.length; i++) {
+      const key = videoKeys[i];
+      const pv = pendingVideoFiles[key];
+      setStatus(`上传视频 ${i+1} / ${videoKeys.length}：${pv.filename}`, '');
+      const b64 = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = e => resolve(e.target.result.split(',')[1]);
+        r.onerror = reject;
+        r.readAsDataURL(pv.file);
+      });
+      await ghPut(pv.targetPath, b64, `upload ${pv.filename}`);
+      updateBlockImagePath(key, pv.targetPath);
+    }
+    pendingVideoFiles = {};
 
     // 2. Write project-N.json
     setStatus('写入项目数据…', '');
