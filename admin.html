@@ -990,12 +990,11 @@ function makeTextarea(placeholder, value, rows, onChange) {
 function buildTextFields(block) {
   const frag = document.createDocumentFragment();
 
-  // 样式下拉：决定 type + level
+  // 样式下拉
   function currentStyle() {
     if (block.type === 'heading') return 'h' + (block.level || 2);
-    return block.type; // 'body' | 'quote'
+    return block.type;
   }
-
   const sel = document.createElement('select');
   [
     ['h1','H1 一级标题'], ['h2','H2 二级标题'], ['h3','H3 三级标题'],
@@ -1008,24 +1007,61 @@ function buildTextFields(block) {
   });
   sel.addEventListener('change', () => {
     const v = sel.value;
-    if (v.startsWith('h')) {
-      block.type = 'heading';
-      block.level = parseInt(v[1]);
-    } else {
-      block.type = v; // 'body' | 'quote'
-      delete block.level;
-    }
+    if (v.startsWith('h')) { block.type = 'heading'; block.level = parseInt(v[1]); }
+    else { block.type = v; delete block.level; }
     autosave();
   });
   frag.appendChild(fieldGroup('样式', sel));
 
-  // 内容 textarea（统一支持换行）
-  const ta = document.createElement('textarea');
-  ta.value = block.content || '';
-  ta.placeholder = '输入内容，支持换行';
-  ta.rows = 4;
-  ta.addEventListener('input', () => { block.content = ta.value; autosave(); });
-  frag.appendChild(fieldGroup('内容', ta));
+  // 富文本编辑区
+  const editorWrap = document.createElement('div');
+  editorWrap.className = 'field-group';
+
+  const lbl = document.createElement('label');
+  lbl.className = 'field-label';
+  lbl.textContent = '内容';
+  editorWrap.appendChild(lbl);
+
+  // 工具栏
+  const toolbar = document.createElement('div');
+  toolbar.style.cssText = 'display:flex;gap:4px;margin-bottom:4px;';
+
+  const btnBold = document.createElement('button');
+  btnBold.type = 'button';
+  btnBold.innerHTML = '<b>B</b>';
+  btnBold.title = '加粗 (Cmd+B)';
+  btnBold.style.cssText = 'width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .12s;font-family:Inter,sans-serif;';
+  btnBold.addEventListener('mousedown', e => {
+    e.preventDefault(); // 防止编辑区失焦
+    document.execCommand('bold');
+    editor.dispatchEvent(new Event('input'));
+  });
+  // 选中时高亮按钮
+  function updateToolbar() {
+    btnBold.style.background = document.queryCommandState('bold') ? 'var(--accent-light)' : 'var(--surface)';
+    btnBold.style.borderColor = document.queryCommandState('bold') ? 'var(--accent)' : 'var(--border)';
+  }
+
+  toolbar.appendChild(btnBold);
+  editorWrap.appendChild(toolbar);
+
+  // contenteditable 编辑区
+  const editor = document.createElement('div');
+  editor.contentEditable = 'true';
+  editor.innerHTML = block.content || '';
+  editor.style.cssText = 'min-height:80px;border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-size:13px;font-family:Inter,sans-serif;color:var(--text);background:var(--bg);outline:none;line-height:1.7;transition:border-color .15s;white-space:pre-wrap;';
+  editor.addEventListener('focus', () => { editor.style.borderColor = 'var(--accent)'; editor.style.background = '#fff'; });
+  editor.addEventListener('blur',  () => { editor.style.borderColor = 'var(--border)'; editor.style.background = 'var(--bg)'; });
+  editor.addEventListener('keyup', updateToolbar);
+  editor.addEventListener('mouseup', updateToolbar);
+  editor.addEventListener('input', () => { block.content = editor.innerHTML; autosave(); });
+  // Cmd+B / Ctrl+B
+  editor.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'b') { e.preventDefault(); document.execCommand('bold'); editor.dispatchEvent(new Event('input')); }
+  });
+
+  editorWrap.appendChild(editor);
+  frag.appendChild(editorWrap);
   return frag;
 }
 
