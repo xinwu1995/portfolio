@@ -1269,6 +1269,7 @@ function buildImageCarouselFields(block, idx) {
 // image-stack
 function buildImageStackFields(block, idx) {
   if (!block.images) block.images = [];
+  if (!block.captions) block.captions = [];
 
   const wrap = document.createElement('div');
   const lbl = document.createElement('label');
@@ -1281,9 +1282,13 @@ function buildImageStackFields(block, idx) {
   function render() {
     listWrap.innerHTML = '';
     block.images.forEach((src, imgIdx) => {
+      const item = document.createElement('div');
+      item.style.cssText = 'margin-bottom:12px;';
+
+      // 图片行
       const row = document.createElement('div');
       row.className = 'multi-img-item';
-      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:8px;';
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:6px;';
 
       const thumb = document.createElement('div');
       thumb.className = 'multi-img-thumb';
@@ -1316,19 +1321,30 @@ function buildImageStackFields(block, idx) {
       removeBtn.textContent = '×';
       removeBtn.addEventListener('click', () => {
         block.images.splice(imgIdx, 1);
+        block.captions.splice(imgIdx, 1);
         delete pendingUploads[`block_${idx}_stack_${imgIdx}`];
         render();
       });
 
       row.appendChild(thumb); row.appendChild(uploadLbl); row.appendChild(removeBtn);
-      listWrap.appendChild(row);
+
+      // 描述输入框
+      const capInput = makeInput('图片说明（可选）', block.captions[imgIdx] || '', v => {
+        block.captions[imgIdx] = v;
+        autosave();
+      });
+      capInput.style.cssText = 'margin:0 4px;';
+
+      item.appendChild(row);
+      item.appendChild(capInput);
+      listWrap.appendChild(item);
     });
 
     const addBtn = document.createElement('button');
     addBtn.className = 'btn-secondary';
     addBtn.textContent = '+ 添加图片';
     addBtn.style.cssText = 'font-size:12px;padding:6px 14px;';
-    addBtn.addEventListener('click', () => { block.images.push(''); render(); });
+    addBtn.addEventListener('click', () => { block.images.push(''); block.captions.push(''); render(); });
     listWrap.appendChild(addBtn);
   }
 
@@ -1512,7 +1528,7 @@ function newBlock(type) {
     case 'image-single':   return { id, type, src: '', caption: '' };
     case 'image-duo':      return { id, type, images: ['', ''], captions: ['', ''] };
     case 'image-carousel': return { id, type, images: [], captions: [] };
-    case 'image-stack':    return { id, type, images: [] };
+    case 'image-stack':    return { id, type, images: [], captions: [] };
     case 'image-text':     return { id, type, layout: 'left', image: '', caption: '', text: '' };
     case 'video':          return { id, type, videoType: 'embed', url: '' };
     default: return { id, type };
