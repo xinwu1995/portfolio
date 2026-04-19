@@ -866,11 +866,36 @@ const TYPE_LABELS = {
 // ─────────────────────────────────────────
 function openDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open('portfolio_admin', 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore('projects');
+    const req = indexedDB.open('portfolio_admin', 2);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('projects')) db.createObjectStore('projects');
+      if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs');
+    };
     req.onsuccess = e => resolve(e.target.result);
     req.onerror = reject;
   });
+}
+async function idbSaveBlob(key, blob) {
+  try {
+    const db = await openDB();
+    await new Promise((res, rej) => {
+      const tx = db.transaction('blobs', 'readwrite');
+      tx.objectStore('blobs').put(blob, key);
+      tx.oncomplete = res; tx.onerror = rej;
+    });
+  } catch(e) {}
+}
+async function idbLoadBlob(key) {
+  try {
+    const db = await openDB();
+    return await new Promise((res, rej) => {
+      const tx = db.transaction('blobs', 'readonly');
+      const req = tx.objectStore('blobs').get(key);
+      req.onsuccess = e => res(e.target.result || null);
+      req.onerror = rej;
+    });
+  } catch(e) { return null; }
 }
 async function idbSave(id, data) {
   try {
@@ -1531,10 +1556,12 @@ function buildVideoTypeFields(block, idx) {
         };
         reader.readAsDataURL(file);
       } else {
-        // 大文件（20MB–100MB）：用 Object URL，避免内存爆炸
-        block._localVideoSrc = URL.createObjectURL(file);
+        // 大文件（20MB–100MB）：存 Blob 到 IndexedDB，预览页从 IDB 读取
+        const idbKey = `video_p${currentId}_b${idx}_${Date.now()}`;
+        block._idbVideoKey = idbKey;
+        block._localVideoSrc = URL.createObjectURL(file); // admin 本页展示用
         pendingVideoFiles[pendingKey] = { file, filename: fname, targetPath: `assets/videos/${fname}` };
-        autosave();
+        idbSaveBlob(idbKey, file).then(() => autosave());
       }
     });
 

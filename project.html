@@ -575,10 +575,21 @@
       wrap.className = 'block block-video';
       if (block.videoType === 'upload') {
         const video = document.createElement('video');
-        // _localVideoSrc: 本地预览用的 data URL 或 blob URL（admin 实时预览时使用）
-        video.src = block._localVideoSrc || block.src;
         video.controls = true;
         video.playsInline = true;
+
+        // 优先用 data URL（小视频跨标签直接可用）
+        if (block._localVideoSrc && block._localVideoSrc.startsWith('data:')) {
+          video.src = block._localVideoSrc;
+        } else if (block._idbVideoKey) {
+          // 大视频：从 IndexedDB 读 Blob 创建本地 URL
+          openVideoDB().then(db => idbGetBlob(db, block._idbVideoKey)).then(blob => {
+            if (blob) video.src = URL.createObjectURL(blob);
+          }).catch(() => {});
+        } else {
+          // 已发布的线上视频
+          video.src = block.src;
+        }
         wrap.appendChild(video);
       } else {
         const embedDiv = document.createElement('div');
@@ -603,6 +614,28 @@
         wrap.appendChild(embedDiv);
       }
       return wrap;
+    }
+
+    // ── IndexedDB 工具（读取 admin 存入的大视频 Blob）──
+    function openVideoDB() {
+      return new Promise((res, rej) => {
+        const req = indexedDB.open('portfolio_admin', 2);
+        req.onupgradeneeded = e => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('projects')) db.createObjectStore('projects');
+          if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs');
+        };
+        req.onsuccess = e => res(e.target.result);
+        req.onerror = rej;
+      });
+    }
+    function idbGetBlob(db, key) {
+      return new Promise((res, rej) => {
+        const tx = db.transaction('blobs', 'readonly');
+        const req = tx.objectStore('blobs').get(key);
+        req.onsuccess = e => res(e.target.result || null);
+        req.onerror = rej;
+      });
     }
 
     // ── 加载项目 ──
