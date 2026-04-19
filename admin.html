@@ -720,6 +720,69 @@ async function ghPut(path, base64Content, message) {
   return res.json();
 }
 
+// 使用 Git Data API 上传大文件（视频等），绕过 Contents API 大小限制
+// 多个文件合并为一次 commit
+async function ghPutBlobs(files) {
+  // files: [{ path, base64, filename }]
+  const base = `https://api.github.com/repos/${config.owner}/${config.repo}`;
+  const headers = {
+    Authorization: `token ${config.token}`,
+    'Content-Type': 'application/json',
+    Accept: 'application/vnd.github.v3+json'
+  };
+
+  // 1. 逐个创建 blob
+  const blobShas = [];
+  for (const f of files) {
+    const res = await fetch(`${base}/git/blobs`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ content: f.base64, encoding: 'base64' })
+    });
+    if (!res.ok) throw new Error(`创建 blob 失败 (${f.filename}): ${(await res.json().catch(()=>({}))).message || res.status}`);
+    const blob = await res.json();
+    blobShas.push({ path: f.path, sha: blob.sha });
+  }
+
+  // 2. 获取当前 main 的 commit & tree SHA
+  const refRes = await fetch(`${base}/git/refs/heads/main`, { headers });
+  if (!refRes.ok) throw new Error('获取分支 ref 失败');
+  const ref = await refRes.json();
+  const headSha = ref.object.sha;
+
+  const commitRes = await fetch(`${base}/git/commits/${headSha}`, { headers });
+  const headCommit = await commitRes.json();
+
+  // 3. 创建包含所有新文件的新树
+  const treeRes = await fetch(`${base}/git/trees`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      base_tree: headCommit.tree.sha,
+      tree: blobShas.map(b => ({ path: b.path, mode: '100644', type: 'blob', sha: b.sha }))
+    })
+  });
+  if (!treeRes.ok) throw new Error('创建 tree 失败');
+  const tree = await treeRes.json();
+
+  // 4. 创建新 commit
+  const newCommitRes = await fetch(`${base}/git/commits`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      message: `upload videos: ${files.map(f => f.filename).join(', ')}`,
+      tree: tree.sha,
+      parents: [headSha]
+    })
+  });
+  if (!newCommitRes.ok) throw new Error('创建 commit 失败');
+  const newCommit = await newCommitRes.json();
+
+  // 5. 更新 main 指向新 commit
+  const patchRes = await fetch(`${base}/git/refs/heads/main`, {
+    method: 'PATCH', headers,
+    body: JSON.stringify({ sha: newCommit.sha })
+  });
+  if (!patchRes.ok) throw new Error('更新 ref 失败');
+}
+
 function textToBase64(str) {
   const bytes = new TextEncoder().encode(str);
   let binary = '';
@@ -1623,22 +1686,27 @@ async function publishProject() {
     }
     pendingUploads = {};
 
-    // 1b. Upload large video files (read as base64 at publish time)
+    // 1b. Upload large video files via Git Data API (支持最大 100MB)
     const videoKeys = Object.keys(pendingVideoFiles);
-    for (let i = 0; i < videoKeys.length; i++) {
-      const key = videoKeys[i];
-      const pv = pendingVideoFiles[key];
-      setStatus(`上传视频 ${i+1} / ${videoKeys.length}：${pv.filename}`, '');
-      const b64 = await new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = e => resolve(e.target.result.split(',')[1]);
-        r.onerror = reject;
-        r.readAsDataURL(pv.file);
-      });
-      await ghPut(pv.targetPath, b64, `upload ${pv.filename}`);
-      updateBlockImagePath(key, pv.targetPath);
+    if (videoKeys.length > 0) {
+      const blobFiles = [];
+      for (let i = 0; i < videoKeys.length; i++) {
+        const key = videoKeys[i];
+        const pv = pendingVideoFiles[key];
+        setStatus(`编码视频 ${i+1}/${videoKeys.length}：${pv.filename}（可能需要几秒）`, '');
+        const b64 = await new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = e => resolve(e.target.result.split(',')[1]);
+          r.onerror = reject;
+          r.readAsDataURL(pv.file);
+        });
+        blobFiles.push({ path: pv.targetPath, base64: b64, filename: pv.filename, key });
+      }
+      setStatus(`上传视频到 GitHub（共 ${blobFiles.length} 个）…`, '');
+      await ghPutBlobs(blobFiles);
+      blobFiles.forEach(f => updateBlockImagePath(f.key, f.path));
+      pendingVideoFiles = {};
     }
-    pendingVideoFiles = {};
 
     // 2. Write project-N.json
     setStatus('写入项目数据…', '');
