@@ -729,6 +729,7 @@ function renderSidebar() {
 async function selectProject(id) {
   currentId = id;
   pendingUploads = {};
+  getPreviewChannel(id);  // 初始化/切换 BroadcastChannel
   renderSidebar();
   setStatus('加载中…', '');
 
@@ -763,17 +764,37 @@ const TYPE_LABELS = {
 };
 
 // ─────────────────────────────────────────
-// Auto-save to localStorage
+// Auto-save + BroadcastChannel 实时预览
 // ─────────────────────────────────────────
+let previewChannel = null;  // 当前项目的 BroadcastChannel
+
+function getPreviewChannel(id) {
+  if (previewChannel) previewChannel.close();
+  previewChannel = new BroadcastChannel('portfolio_preview_' + id);
+  // 预览页打开时会发 request，admin 立刻回送当前数据
+  previewChannel.addEventListener('message', e => {
+    if (e.data && e.data.type === 'request') broadcastPreview();
+  });
+  return previewChannel;
+}
+
+function broadcastPreview() {
+  if (!currentId || !currentData || !previewChannel) return;
+  previewChannel.postMessage({ type: 'data', data: currentData });
+}
+
 let autosaveTimer = null;
 function autosave() {
   if (!currentId || !currentData) return;
+  // 立刻广播给预览页（含图片 data URL）
+  broadcastPreview();
+  // 延迟存 localStorage（仅文字，图片大时会静默失败）
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(() => {
     try {
       localStorage.setItem('portfolio_preview_' + currentId, JSON.stringify(currentData));
-    } catch(e) { /* storage full */ }
-  }, 300);
+    } catch(e) { /* storage full, ok */ }
+  }, 500);
 }
 
 function renderBlockList() {
