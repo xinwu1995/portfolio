@@ -1544,23 +1544,23 @@ function buildVideoTypeFields(block, idx) {
       delete block.url;
       text.innerHTML = `已选择：<span>${fname}</span>（点击重新选择）`;
 
-      const LARGE_THRESHOLD = 20 * 1024 * 1024; // 20MB
-      if (file.size <= LARGE_THRESHOLD) {
-        // 小文件：用 FileReader 转 base64，支持跨标签实时预览
+      // 所有视频都走 Git Data API 发布（Contents API 对视频不可靠）
+      const idbKey = `video_p${currentId}_b${idx}_${Date.now()}`;
+      block._idbVideoKey = idbKey;
+      pendingVideoFiles[pendingKey] = { file, filename: fname, targetPath: `assets/videos/${fname}` };
+
+      // 小于 15MB：FileReader 生成 data URL，跨标签实时预览可用
+      // 大于 15MB：Object URL，仅当前标签预览；预览页从 IndexedDB 读取
+      const PREVIEW_THRESHOLD = 15 * 1024 * 1024;
+      if (file.size <= PREVIEW_THRESHOLD) {
         const reader = new FileReader();
         reader.onload = e => {
-          const b64 = e.target.result.split(',')[1];
-          pendingUploads[pendingKey] = { base64: b64, filename: fname, targetPath: `assets/videos/${fname}` };
           block._localVideoSrc = e.target.result;
-          autosave();
+          idbSaveBlob(idbKey, file).then(() => autosave());
         };
         reader.readAsDataURL(file);
       } else {
-        // 大文件（20MB–100MB）：存 Blob 到 IndexedDB，预览页从 IDB 读取
-        const idbKey = `video_p${currentId}_b${idx}_${Date.now()}`;
-        block._idbVideoKey = idbKey;
-        block._localVideoSrc = URL.createObjectURL(file); // admin 本页展示用
-        pendingVideoFiles[pendingKey] = { file, filename: fname, targetPath: `assets/videos/${fname}` };
+        block._localVideoSrc = URL.createObjectURL(file);
         idbSaveBlob(idbKey, file).then(() => autosave());
       }
     });
