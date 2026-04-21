@@ -1,8 +1,17 @@
 {
   "id": 2,
-  "title": "必胜客 APP & 小程序",
+  "title": "更多的项目",
   "blocks": [
-    { "id": "b1", "type": "heading", "level": 1, "content": "项目背景" },
-    { "id": "b2", "type": "body", "content": "这里填写项目背景介绍。" }
+    {
+      "id": "b1",
+      "type": "heading",
+      "level": 1,
+      "content": "项目背景"
+    },
+    {
+      "id": "b2",
+      "type": "body",
+      "content": "这里填写项目背景介绍。"
+    }
   ]
 }
