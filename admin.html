@@ -625,8 +625,10 @@ select { cursor: pointer; }
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" id="btn-modal-cancel">取消</button>
+      <button class="btn-secondary" id="btn-modal-test">测试连接</button>
       <button class="btn-primary" id="btn-modal-save">保存</button>
     </div>
+    <p id="modal-test-result" style="margin-top:10px;font-size:13px;min-height:18px;"></p>
   </div>
 </div>
 
@@ -1767,6 +1769,30 @@ async function publishProject() {
 document.getElementById('btn-gh-settings').addEventListener('click', openModal);
 document.getElementById('btn-modal-cancel').addEventListener('click', closeModal);
 document.getElementById('btn-modal-save').addEventListener('click', saveConfig);
+document.getElementById('btn-modal-test').addEventListener('click', async () => {
+  const owner = document.getElementById('gh-owner').value.trim();
+  const repo  = document.getElementById('gh-repo').value.trim();
+  const token = document.getElementById('gh-token').value.trim();
+  const result = document.getElementById('modal-test-result');
+  result.textContent = '测试中…';
+  result.style.color = '#888';
+  try {
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+    });
+    if (res.ok) {
+      result.textContent = '✓ 连接成功，配置有效';
+      result.style.color = '#10b981';
+    } else {
+      const err = await res.json().catch(() => ({}));
+      result.textContent = '✗ 失败：' + (err.message || res.status);
+      result.style.color = '#ef4444';
+    }
+  } catch(e) {
+    result.textContent = '✗ 网络错误：' + e.message;
+    result.style.color = '#ef4444';
+  }
+});
 document.getElementById('modal-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-overlay')) closeModal();
 });
