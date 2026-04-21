@@ -362,6 +362,103 @@
     }
     .zoomable { cursor: zoom-in; }
 
+    /* ── PPT 查看器 ── */
+    .block-ppt-viewer {
+      display: flex;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      background: #18181b;
+      max-width: 100%;
+    }
+    .ppt-sidebar {
+      width: 176px;
+      flex-shrink: 0;
+      background: #f4f4f5;
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-right: 1px solid var(--border);
+    }
+    .ppt-sidebar::-webkit-scrollbar { width: 4px; }
+    .ppt-sidebar::-webkit-scrollbar-track { background: transparent; }
+    .ppt-sidebar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+    .ppt-thumb {
+      position: relative;
+      cursor: pointer;
+      border-radius: 5px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      transition: border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .ppt-thumb:hover { border-color: #d1d5db; }
+    .ppt-thumb.active { border-color: #10b981; }
+    .ppt-thumb img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+    }
+    .ppt-thumb-num {
+      position: absolute;
+      bottom: 4px;
+      left: 5px;
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(0,0,0,0.4);
+      line-height: 1;
+    }
+    .ppt-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #18181b;
+      position: relative;
+      padding: 0;
+    }
+    .ppt-main img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16/9;
+      object-fit: contain;
+    }
+    .ppt-nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.12);
+      border: none;
+      border-radius: 50%;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: white;
+      font-size: 18px;
+      line-height: 1;
+      transition: background 0.15s;
+      z-index: 2;
+    }
+    .ppt-nav-btn:hover { background: rgba(255,255,255,0.25); }
+    .ppt-nav-btn-prev { left: 12px; }
+    .ppt-nav-btn-next { right: 12px; }
+    .ppt-nav-btn:disabled { opacity: 0.2; cursor: default; }
+    .ppt-counter {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.05em;
+      pointer-events: none;
+    }
+
     /* ── 响应式 ── */
     @media (max-width: 768px) {
       nav { padding: 0 20px; height: 52px; }
@@ -372,6 +469,8 @@
       .block-image-text.layout-right .it-img,
       .block-image-text.layout-right .it-text { order: unset; }
       .project-nav { padding: 32px 20px 48px; }
+      .ppt-sidebar { width: 100px; padding: 8px 6px; }
+      .ppt-nav-btn { width: 28px; height: 28px; font-size: 14px; }
     }
   </style>
 </head>
@@ -442,6 +541,7 @@
         case 'image-stack':    return renderImageStack(block);
         case 'image-text':     return renderImageText(block);
         case 'video':          return renderVideo(block);
+        case 'ppt-viewer':     return renderPptViewer(block);
         default:
           return document.createElement('div');
       }
@@ -662,6 +762,93 @@
         embedDiv.appendChild(iframe);
         wrap.appendChild(embedDiv);
       }
+      return wrap;
+    }
+
+    function renderPptViewer(block) {
+      const images = block.images || [];
+      let current = 0;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'block block-ppt-viewer';
+
+      // 左侧缩略图栏
+      const sidebar = document.createElement('div');
+      sidebar.className = 'ppt-sidebar';
+
+      // 右侧主展示区
+      const mainArea = document.createElement('div');
+      mainArea.className = 'ppt-main';
+
+      const mainImg = document.createElement('img');
+      mainImg.src = images[0] || '';
+      mainImg.alt = '幻灯片 1';
+      mainArea.appendChild(mainImg);
+
+      // 上一张 / 下一张按钮
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'ppt-nav-btn ppt-nav-btn-prev';
+      prevBtn.innerHTML = '&#8249;';
+      prevBtn.title = '上一张';
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'ppt-nav-btn ppt-nav-btn-next';
+      nextBtn.innerHTML = '&#8250;';
+      nextBtn.title = '下一张';
+
+      const counter = document.createElement('div');
+      counter.className = 'ppt-counter';
+
+      mainArea.appendChild(prevBtn);
+      mainArea.appendChild(nextBtn);
+      mainArea.appendChild(counter);
+
+      // 缩略图
+      const thumbEls = images.map((src, i) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'ppt-thumb' + (i === 0 ? ' active' : '');
+
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = '第 ' + (i + 1) + ' 张';
+        thumb.appendChild(img);
+
+        const num = document.createElement('span');
+        num.className = 'ppt-thumb-num';
+        num.textContent = i + 1;
+        thumb.appendChild(num);
+
+        thumb.addEventListener('click', () => goTo(i));
+        sidebar.appendChild(thumb);
+        return thumb;
+      });
+
+      function goTo(idx) {
+        current = Math.max(0, Math.min(idx, images.length - 1));
+        mainImg.src = images[current];
+        mainImg.alt = '幻灯片 ' + (current + 1);
+        thumbEls.forEach((t, i) => t.classList.toggle('active', i === current));
+        // 滚动缩略图到可视区
+        thumbEls[current].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        prevBtn.disabled = current === 0;
+        nextBtn.disabled = current === images.length - 1;
+        counter.textContent = (current + 1) + ' / ' + images.length;
+      }
+
+      prevBtn.addEventListener('click', () => goTo(current - 1));
+      nextBtn.addEventListener('click', () => goTo(current + 1));
+
+      // 键盘左右键
+      wrap.setAttribute('tabindex', '0');
+      wrap.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
+      });
+
+      goTo(0);
+
+      wrap.appendChild(sidebar);
+      wrap.appendChild(mainArea);
       return wrap;
     }
 

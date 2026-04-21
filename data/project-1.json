@@ -3,34 +3,17 @@
   "title": "奇思妙问 · 国内首家探索式对话助手",
   "blocks": [
     {
-      "id": "b1776758360412",
-      "type": "image-single",
-      "src": "assets/images/projects/p1-src-b0-1776758504632.png",
-      "caption": ""
-    },
-    {
-      "id": "b1776758363245",
-      "type": "image-single",
-      "src": "assets/images/projects/p1-src-b1-1776758511055.png",
-      "caption": ""
-    },
-    {
-      "id": "b1776758376371",
-      "type": "image-single",
-      "src": "assets/images/projects/p1-src-b2-1776758631150.png",
-      "caption": ""
-    },
-    {
-      "id": "b1776758374897",
-      "type": "image-single",
-      "src": "assets/images/projects/p1-src-b3-1776758637039.png",
-      "caption": ""
-    },
-    {
-      "id": "b1776758373267",
-      "type": "image-single",
-      "src": "assets/images/projects/p1-src-b4-1776758645638.png",
-      "caption": ""
+      "id": "b1_ppt",
+      "type": "ppt-viewer",
+      "images": [
+        "assets/images/projects/p1-slide-1.png",
+        "assets/images/projects/p1-slide-2.png",
+        "assets/images/projects/p1-slide-3.png",
+        "assets/images/projects/p1-slide-4.png",
+        "assets/images/projects/p1-slide-5.png",
+        "assets/images/projects/p1-slide-6.png",
+        "assets/images/projects/p1-slide-7.png"
+      ]
     }
   ]
 }
