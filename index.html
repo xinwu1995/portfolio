@@ -419,6 +419,20 @@
       box-shadow: 0 4px 24px rgba(0,0,0,0.07);
       width: 320px;
     }
+    @keyframes card-shake {
+      0%   { transform: translateX(0); }
+      10%  { transform: translateX(-12px); }
+      25%  { transform: translateX(10px); }
+      40%  { transform: translateX(-8px); }
+      55%  { transform: translateX(6px); }
+      68%  { transform: translateX(-4px); }
+      80%  { transform: translateX(3px); }
+      90%  { transform: translateX(-2px); }
+      100% { transform: translateX(0); }
+    }
+    .avatar-card.shaking {
+      animation: card-shake 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
     .avatar-qr-divider {
       width: 100%;
       height: 1px;
@@ -858,10 +872,10 @@
   <nav id="navbar">
     <a href="#" class="nav-logo">吴欣</a>
     <div class="nav-links">
-      <a href="#projects">项目</a>
       <a href="#resume">简历</a>
+      <a href="#projects">项目</a>
     </div>
-    <a href="mailto:1532456470@qq.com" class="nav-cta">联系我 →</a>
+    <a href="#" class="nav-cta" id="contact-btn">联系我 →</a>
   </nav>
 
   <!-- Hero -->
@@ -876,8 +890,8 @@
           正在接受新机会
         </div>
         <h1>
-          让「好用」<br>
-          <span class="muted">赋能</span>业务增长
+          让「<span style="color:#10b981">好用</span>」<br>
+          <span style="color:#09090b">驱动</span>业务增长
         </h1>
         <p class="hero-desc">
           9 年互联网 UX 设计经验，深耕教育与零售领域，在科大讯飞素质教育部门负责 AI 课堂、SaaS 教务平台等核心业务线，服务学校 2 万所+。
@@ -923,7 +937,8 @@
           </div>
           <div class="avatar-qr-divider"></div>
           <img class="avatar-qr" src="assets/images/wechat-qr.jpg" alt="微信二维码">
-          <div class="avatar-qr-label">扫码添加微信</div>
+          <div class="avatar-qr-label">感兴趣可添加微信</div>
+          <div class="avatar-qr-label">手机号：13125078214</div>
         </div>
       </div>
     </div>
@@ -1006,9 +1021,8 @@
         <div class="resume-sidebar">
           <h3>关于我</h3>
           <ul class="resume-about-list">
-            <li>会搭建 AI 工作流和熟练 vibecoding 经验，有学习能力和执行能力，并赋能团队</li>
             <li>讯飞 24–25 年全年绩效优秀，拥有丰富的 C、B 端经验，从事多年电商、教育业务</li>
-            <li>一人多职（产品经理、UE 设计、UI 设计），在职业素养上对体验和美感有极高的追求，致力打造好用的产品</li>
+            <li>一人多职（产品经理、UX 设计），在职业素养上对体验和美感有极高的追求，致力打造好用的产品</li>
             <li>团队协作、沟通能力强，能够承受工作压力</li>
           </ul>
         </div>
@@ -1028,80 +1042,76 @@
     </div>
     <div class="projects-grid">
 
-      <a href="project.html?id=1" class="project-card">
+      <a href="project.html?id=4" class="project-card" id="project-4">
+        <div class="project-thumb thumb-4">🚀</div>
+        <div class="project-body">
+          <div class="project-meta">
+            <span class="project-type">产品 · UX</span>
+            <span class="project-year">2025–至今</span>
+          </div>
+          <div class="project-title">智能导师 · 科学教育 openclaw</div>
+          <div class="project-desc">让教师学会像教学专家一样教学，让学生学会像科学家一样思考。</div>
+          <div class="project-footer">
+            <div class="project-tags">
+              <span class="project-tag">PC 端</span>
+              <span class="project-tag">Pad 端</span>
+              <span class="project-tag">移动端</span>
+            </div>
+            <div class="project-arrow">→</div>
+          </div>
+        </div>
+      </a>
+
+      <a href="project.html?id=1" class="project-card" id="project-1">
         <div class="project-thumb thumb-1">🎨</div>
         <div class="project-body">
           <div class="project-meta">
             <span class="project-type">UX 设计</span>
-            <span class="project-year">2023</span>
+            <span class="project-year">2023–2025</span>
           </div>
-          <div class="project-title">AI 课堂 · 奇思妙问</div>
+          <div class="project-title">奇思妙问 · 国内首家教育数字人探索式对话</div>
           <div class="project-desc">国内首家数字人课堂，服务 2w+ 所学校，2024 年获总理表扬登上新闻联播。</div>
           <div class="project-footer">
             <div class="project-tags">
-              <span class="project-tag">Figma</span>
-              <span class="project-tag">设计系统</span>
-              <span class="project-tag">组件库</span>
+              <span class="project-tag">大屏</span>
+              <span class="project-tag">一体机</span>
             </div>
             <div class="project-arrow">→</div>
           </div>
         </div>
       </a>
 
-      <a href="project.html?id=2" class="project-card">
-        <div class="project-thumb thumb-2">📱</div>
-        <div class="project-body">
-          <div class="project-meta">
-            <span class="project-type">交互设计</span>
-            <span class="project-year">2020</span>
-          </div>
-          <div class="project-title">必胜客 APP & 小程序</div>
-          <div class="project-desc">累计会员 1.3 亿的餐饮数字化产品，负责 UX 设计与交互体验。</div>
-          <div class="project-footer">
-            <div class="project-tags">
-              <span class="project-tag">iOS</span>
-              <span class="project-tag">Android</span>
-              <span class="project-tag">AI 产品</span>
-            </div>
-            <div class="project-arrow">→</div>
-          </div>
-        </div>
-      </a>
-
-      <a href="project.html?id=3" class="project-card">
+      <a href="project.html?id=3" class="project-card" id="project-3">
         <div class="project-thumb thumb-3">🖥️</div>
         <div class="project-body">
           <div class="project-meta">
-            <span class="project-type">产品设计</span>
-            <span class="project-year">2022</span>
+            <span class="project-type">产品 · UX</span>
+            <span class="project-year">2022–2025</span>
           </div>
           <div class="project-title">SaaS 教务平台</div>
-          <div class="project-desc">服务 303 个区域、1w+ 学校的教育 SaaS 产品，负责产品及 UX 工作。</div>
+          <div class="project-desc">服务 303 个区县，1w+ 学校的教务 SaaS 平台</div>
           <div class="project-footer">
             <div class="project-tags">
-              <span class="project-tag">Web</span>
-              <span class="project-tag">数据可视化</span>
-              <span class="project-tag">B 端</span>
+              <span class="project-tag">Web 端</span>
+              <span class="project-tag">ToB</span>
             </div>
             <div class="project-arrow">→</div>
           </div>
         </div>
       </a>
 
-      <a href="project.html?id=4" class="project-card">
-        <div class="project-thumb thumb-4">🚀</div>
+      <a href="project.html?id=2" class="project-card" id="project-2">
+        <div class="project-thumb thumb-2">📱</div>
         <div class="project-body">
           <div class="project-meta">
             <span class="project-type">UX 设计</span>
-            <span class="project-year">2024</span>
+            <span class="project-year">2018–2021</span>
           </div>
-          <div class="project-title">智能导师 · openclaw</div>
-          <div class="project-desc">让教师学会像教学专家一样教学，让学生学会像科学家一样思考。</div>
+          <div class="project-title">必胜客 APP</div>
+          <div class="project-desc">国内餐饮巨头，累计会员 1.3 亿的餐饮数字化产品</div>
           <div class="project-footer">
             <div class="project-tags">
-              <span class="project-tag">Web</span>
-              <span class="project-tag">IoT</span>
-              <span class="project-tag">大屏</span>
+              <span class="project-tag">移动端</span>
             </div>
             <div class="project-arrow">→</div>
           </div>
@@ -1113,22 +1123,25 @@
   </div>
 
   <!-- Footer -->
-  <footer id="contact">
-    <div>
-      <div class="footer-name">吴欣</div>
-      <div class="footer-copy">高级UX设计师 · 武汉</div>
-    </div>
-    <div class="footer-links">
-      <a href="tel:13125078214">13125078214</a>
-      <a href="mailto:1532456470@qq.com">邮箱</a>
-    </div>
-  </footer>
 
   <script>
     // 导航滚动效果
     const navbar = document.getElementById('navbar');
     window.addEventListener('scroll', () => {
       navbar.classList.toggle('scrolled', window.scrollY > 10);
+    });
+
+    // 联系我 → 触发卡片晃动
+    document.getElementById('contact-btn').addEventListener('click', e => {
+      e.preventDefault();
+      const card = document.querySelector('.avatar-card');
+      card.classList.remove('shaking');
+      // 强制重排，确保动画可重复触发
+      void card.offsetWidth;
+      card.classList.add('shaking');
+      card.addEventListener('animationend', () => card.classList.remove('shaking'), { once: true });
+      // 滚动到卡片位置
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
   </script>
 </body>
