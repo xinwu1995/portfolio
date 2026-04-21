@@ -638,19 +638,7 @@
         const video = document.createElement('video');
         video.controls = true;
         video.playsInline = true;
-
-        // 优先用 data URL（小视频跨标签直接可用）
-        if (block._localVideoSrc && block._localVideoSrc.startsWith('data:')) {
-          video.src = block._localVideoSrc;
-        } else if (block._idbVideoKey) {
-          // 大视频：从 IndexedDB 读 Blob 创建本地 URL
-          openVideoDB().then(db => idbGetBlob(db, block._idbVideoKey)).then(blob => {
-            if (blob) video.src = URL.createObjectURL(blob);
-          }).catch(() => {});
-        } else {
-          // 已发布的线上视频
-          video.src = block.src;
-        }
+        video.src = block.src;
         wrap.appendChild(video);
       } else {
         const embedDiv = document.createElement('div');
@@ -677,40 +665,9 @@
       return wrap;
     }
 
-    // ── IndexedDB 工具（读取 admin 存入的大视频 Blob）──
-    function openVideoDB() {
-      return new Promise((res, rej) => {
-        const req = indexedDB.open('portfolio_admin', 2);
-        req.onupgradeneeded = e => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains('projects')) db.createObjectStore('projects');
-          if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs');
-        };
-        req.onsuccess = e => res(e.target.result);
-        req.onerror = rej;
-      });
-    }
-    function idbGetBlob(db, key) {
-      return new Promise((res, rej) => {
-        const tx = db.transaction('blobs', 'readonly');
-        const req = tx.objectStore('blobs').get(key);
-        req.onsuccess = e => res(e.target.result || null);
-        req.onerror = rej;
-      });
-    }
-
     // ── 加载项目 ──
     const params = new URLSearchParams(location.search);
     const id = parseInt(params.get('id')) || 1;
-    const isPreview = params.get('preview') === '1';
-
-    // 预览模式 badge
-    if (isPreview) {
-      const badge = document.createElement('div');
-      badge.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#10b981;color:#fff;font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;z-index:999;box-shadow:0 4px 12px rgba(16,185,129,.4);';
-      badge.textContent = '预览模式 · 实时同步';
-      document.body.appendChild(badge);
-    }
 
     function renderProject(project, projects) {
       document.title = project.title + ' · 吴欣';
@@ -745,35 +702,23 @@
       }
     }
 
-    if (isPreview) {
-      // 预览模式：直接走 BroadcastChannel，不依赖 fetch
-      const channel = new BroadcastChannel('portfolio_preview_' + id);
-      channel.addEventListener('message', e => {
-        if (e.data && e.data.type === 'data') {
-          try { renderProject(e.data.data, []); } catch(ex) {}
-        }
-      });
-      channel.postMessage({ type: 'request' });
-    } else {
-      // 正常浏览模式（GitHub Pages）：fetch JSON
-      fetch('data/projects.json').then(r => r.json()).then(projects => {
-        fetch('data/project-' + id + '.json').then(r => {
-          if (!r.ok) throw new Error('项目不存在');
-          return r.json();
-        }).then(project => renderProject(project, projects))
-          .catch(err => {
-            const errP = document.createElement('p');
-            errP.style.cssText = 'color:var(--text-muted);padding:40px 0';
-            errP.textContent = '项目内容加载失败：' + err.message;
-            document.getElementById('content').appendChild(errP);
-          });
-      }).catch(err => {
-        const errP = document.createElement('p');
-        errP.style.cssText = 'color:var(--text-muted);padding:40px 0';
-        errP.textContent = '加载失败：' + err.message;
-        document.getElementById('content').appendChild(errP);
-      });
-    }
+    fetch('data/projects.json').then(r => r.json()).then(projects => {
+      fetch('data/project-' + id + '.json').then(r => {
+        if (!r.ok) throw new Error('项目不存在');
+        return r.json();
+      }).then(project => renderProject(project, projects))
+        .catch(err => {
+          const errP = document.createElement('p');
+          errP.style.cssText = 'color:var(--text-muted);padding:40px 0';
+          errP.textContent = '项目内容加载失败：' + err.message;
+          document.getElementById('content').appendChild(errP);
+        });
+    }).catch(err => {
+      const errP = document.createElement('p');
+      errP.style.cssText = 'color:var(--text-muted);padding:40px 0';
+      errP.textContent = '加载失败：' + err.message;
+      document.getElementById('content').appendChild(errP);
+    });
   </script>
 </body>
 </html>
