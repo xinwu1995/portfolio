@@ -56,6 +56,7 @@
       transition: color 0.2s;
     }
     .nav-back:hover { color: var(--text-primary); }
+    .back-label-title { display: none; }
     .nav-title {
       font-size: 13px;
       font-weight: 600;
@@ -486,14 +487,18 @@
     @media (max-width: 768px) {
       nav { padding: 0 20px; height: 52px; }
       .nav-title { display: none; }
+      .back-label-home { display: none; }
+      .back-label-title { display: inline; }
       main { padding: 68px 20px 60px; }
       .block-h1, .block-h2, .block-h3, .block-body, .block-quote { max-width: 100%; }
       .block-image-text { grid-template-columns: 1fr; gap: 20px; }
       .block-image-text.layout-right .it-img,
       .block-image-text.layout-right .it-text { order: unset; }
       .project-nav { padding: 32px 20px 48px; }
-      .ppt-sidebar { width: 100px; padding: 8px 6px; }
-      .ppt-nav-btn { width: 28px; height: 28px; font-size: 14px; }
+      .ppt-toc { display: none; }
+      .block-ppt-viewer { display: block; }
+      .ppt-slides { width: 100%; }
+      .ppt-slide-item img { border-radius: 8px; }
     }
   </style>
 </head>
@@ -504,7 +509,8 @@
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      返回首页
+      <span class="back-label-home">返回首页</span>
+      <span class="back-label-title" id="back-label-title"></span>
     </a>
     <span class="nav-title" id="nav-title"></span>
     <div style="width: 80px"></div>
@@ -904,6 +910,7 @@
     function renderProject(project, projects) {
       document.title = project.title + ' · 吴欣';
       document.getElementById('nav-title').textContent = project.title;
+      document.getElementById('back-label-title').textContent = project.title;
 
       const content = document.getElementById('content');
       content.innerHTML = '';
