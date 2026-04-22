@@ -426,6 +426,13 @@
       transition: opacity 0.5s ease;
     }
     .ppt-slide-item img.loaded { opacity: 1; }
+    .ppt-slide-video video {
+      width: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 1px solid var(--border-subtle);
+      background: #000;
+    }
 
     /* ── 骨架屏 ── */
     .ppt-skeleton {
@@ -499,6 +506,7 @@
       .block-ppt-viewer { display: block; }
       .ppt-slides { width: 100%; }
       .ppt-slide-item img { border-radius: 8px; }
+      .ppt-slide-video video { border-radius: 8px; }
     }
   </style>
 </head>
@@ -768,6 +776,7 @@
         video.controls = true;
         video.playsInline = true;
         video.src = block.src;
+        if (block.poster) video.poster = block.poster;
         wrap.appendChild(video);
       } else {
         const embedDiv = document.createElement('div');
@@ -879,6 +888,19 @@
         thumb.src = src;
       }
       loadNext(0);
+
+      // ── 可选视频（放在图片最下方，宽度与图片一致） ──
+      if (block.video) {
+        const videoWrap = document.createElement('div');
+        videoWrap.className = 'ppt-slide-video';
+        const video = document.createElement('video');
+        video.controls = true;
+        video.playsInline = true;
+        video.src = block.video.src;
+        if (block.video.poster) video.poster = block.video.poster;
+        videoWrap.appendChild(video);
+        slides.appendChild(videoWrap);
+      }
 
       // ── 滚动高亮目录 ──
       const observer = new IntersectionObserver(entries => {

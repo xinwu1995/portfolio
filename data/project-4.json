@@ -15,7 +15,11 @@
         "assets/images/projects/p4-slide-7.png",
         "assets/images/projects/p4-slide-8.png",
         "assets/images/projects/p4-slide-9.png"
-      ]
+      ],
+      "video": {
+        "src": "assets/videos/p4-demo.mp4",
+        "poster": "assets/videos/p4-demo-poster.jpg"
+      }
     }
   ]
 }
